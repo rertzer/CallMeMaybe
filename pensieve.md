@@ -68,13 +68,74 @@ Constrained decoding modify the logits before token selection:
 
 ## Packages
 
+- `typing`:
+  deprecated
+- `mypy`
+  installed
+- `uv`
+  installed
+- `pydantic`
+  installed
+
 ### `typing`
 
+Use it to add type annotations for better code documentation, IDE support, and static type checking with tools like mypy
+
+```python
+from typing import List
+
+def hello(names: List[str]) -> str
+```
+
+Deprecated by built-in generic types.
+But:
+Callable Still useful
+TypedDict Still useful
+Protocol Still useful
+TypeVar Still useful
+
 ### `mypy`
+
+A static type checker
 
 ### `pytest`
 
 ### `pydantic`
+
+Used for data validation and parsing using type hints
+
+```sh
+pip install pydantic pydantic-settings
+```
+
+```python
+from pydantic import BaseModel, field_validator
+
+class Toto(BaseModel):
+    name: str = "toto"
+    age: int
+    email: str | None =  None
+    password: str
+    confirm_password: str
+
+    @field_validator('age')
+    def check_age(cls, value):
+        if value < 18:
+            raise ValueError("You'r underaged!")
+        return value
+
+    @model_validator(mode='after')
+        def password_match(cls, model):
+        if model.password != model.confirm_password:
+            raise ValueError("Password mismatch")
+        return model
+
+# JSON validation
+toto = Toto.model_validate_json(json_string)
+
+# Serialisation to JSON
+json_data = toto.model_dump_json()
+```
 
 ### `uv`
 
@@ -142,6 +203,54 @@ The command first checks against existing Python installations. If the requested
 
 The command creates a new virtual environment inside the project directory, replacing the old one. It reinstalls all dependencies from `pyproject.toml` and `uv.lock` files.
 
+### `UV` tools
+
+Packages as command line tools:
+
+- `flake8`
+- `black`
+
+```sh
+uv tool run black toto.py
+```
+
+Or
+
+```sh
+uvx black toto.py
+```
+
+Tools are installed in a temporary virtual env in uv cache. To install them premanently:
+`uv tool install black`
+
+uv tool install installs standalone command-line tools, whereas uv add installs dependencies into a project's virtual environment.
+
+uv installs the tool in its own isolated environment.
+
+```sh
+On Fedora, the default locations are:
+Content	Location
+Tool environments	~/.local/share/uv/tools/
+Executable commands	~/.local/bin/
+Python downloads	~/.local/share/uv/python/
+uv cache	~/.cache/uv/
+```
+
+Default install directories can be overridden with:
+
+```sh
+export UV_CACHE_DIR=/data/uv/cache
+export UV_TOOL_DIR=/data/uv/tools
+export UV_TOOL_BIN_DIR=/data/uv/bin
+export UV_PYTHON_INSTALL_DIR=/data/uv/python
+```
+
+Generate a `requirements.txt` from a `uv.lock` file:
+
+```sh
+uv export -o requirements.txt
+```
+
 ### `numpy`
 
 ### `json`
@@ -156,6 +265,106 @@ The command creates a new virtual environment inside the project directory, repl
   - clean
   - lint
   - lint-strict (optional)
+
+## pdb debugger
+
+### add breakpoint in code:
+
+```python
+import pdb
+breakpoint()
+```
+
+Or
+
+```sh
+python -m pdb (-m mymodule | -p pid | pyfile)
+```
+
+Execution pauses and opens the debugger
+
+### Commands
+
+| Command | Meaning                                |
+| ------- | -------------------------------------- |
+| n       | Next: execute the next line            |
+| s       | Step: enter a function call            |
+| c       | Continue: run until next breakpoint    |
+| l       | List: show surrounding source code     |
+| p       | variable Print the value of a variable |
+| pp      | variable Pretty-print a variable       |
+| w       | Where: show the current call stack     |
+| u       | Move up the call stack                 |
+| d       | Move down the call stack               |
+| r       | Run until the current function returns |
+| q       | Quit the debugger                      |
+
+add a breakpoint:
+
+```
+b(reak) [ ([filename:]lineno | function) [, condition] ]
+```
+
+## nvim config changes
+
+lsp.lua: replace
+
+```lua
+local ruff_lint = require("efmls-configs.linters.ruff")
+local ruff_format = require("efmls-configs.formatters.ruff")
+```
+
+```lua
+python = { ruff_lint, ruff_format },
+```
+
+with:
+
+```lua
+local flake8 = require("efmls-configs.linters.flake8")
+local autopep8 = require("efmls-configs.formatters.autopep8")
+```
+
+```lua
+python = { flake8, autopep8 },
+```
+
+Configure Pyright for strict type checking
+
+```lua
+vim.lsp.config("pyright", {
+settings = {
+        python = {
+            analysis = {
+                typeCheckingMode = "strict",
+                autoSearchPaths = true,
+                useLibraryCodeForTypes = true,
+                diagnosticMode = "workspace",
+            },
+        },
+    },
+})
+```
+
+Create a `.flake8` config in your project root:
+
+```
+[flake8]
+max-line-length = 79
+extend-select = ANN
+exclude =
+    .git,
+    .venv,
+    __pycache__,
+    build,
+    dist
+```
+
+pip install:
+
+- flake8
+- flake8-annotations
+- autopep8
 
 ## install
 
@@ -306,7 +515,7 @@ By default, the program will read input from `data/input/` and write output to `
 
 # Performances
 
-- > 90% correct function selection and arguement extraction
+- > 90% correct function selection and arguments extraction
 - 100% valid JSON
 - Process all tests prompts in under 5 minutes
 - Robust error handling

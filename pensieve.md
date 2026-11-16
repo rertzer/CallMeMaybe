@@ -37,6 +37,18 @@ Constrained decoding modify the logits before token selection:
 
 - Qwen/Qwen3-0.6B
 
+Qwen3-0.6B has the following features:
+
+- Type: Causal Language Models
+- Training Stage: Pretraining & Post-training
+- Number of Parameters: 0.6B
+- Number of Paramaters (Non-Embedding): 0.44B
+- Number of Layers: 28
+- Number of Attention Heads (GQA): 16 for Q and 8 for KV
+- Context Length: 32,768
+
+Qwen3 uses approximately 36 trillion tokens covering 119 languages and dialects.
+
 # LLM SDK
 
 ## wrapper class `Small_LLM_Model`

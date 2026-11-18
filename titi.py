@@ -15,7 +15,7 @@ def softmax_for_all(logits: list[float]) -> list[float]:
     sums = sum_of_exp(logits)
     return [softmax(i, sums) for i in logits]
 
-def get_top(logits: list[float]) -> list[int]:
+def get_topi(logits: list[float]) -> tuple[list[int], list[float]]:
     top = [-math.inf] * TOP_NB 
     topi = [-1] * TOP_NB 
     si = 0 # Small Index
@@ -28,7 +28,18 @@ def get_top(logits: list[float]) -> list[int]:
                 if val < min :
                     min = val
                     si = i
-    return topi
+    #print(f"{softmax_for_all(top)}, sum :{sum(softmax_for_all(top))}")
+    return (topi, top)
+
+def get_magic_number(probaList: list[float]) -> int:
+    n = rdm.random()
+    pre = 0
+    for i, val in enumerate(probaList):
+        pre += val
+        if pre < n:
+            return i
+    return -1
+
 
 qwen = SLM()
 tensor = qwen.encode("Once upon")
@@ -41,15 +52,12 @@ tensor = tensor[0]
 # print(len(logits))
 
 txt = ""
-for t in range(10):
+for t in range(200):
 
     logits = qwen.get_logits_from_input_ids(tensor)
-    topi = get_top(logits)
-    
+    topi, top = get_topi(logits)
     txt = qwen.decode(tensor)
-    # print(t, tensor)
-    tensor.append(topi[rdm.randint(0,TOP_NB -1 )])
-    #tensor.append(maxi)
+    tensor.append(topi[get_magic_number(softmax_for_all(top))])
 
 print(txt)
 
